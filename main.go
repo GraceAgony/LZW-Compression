@@ -1,37 +1,60 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"strings"
 )
 
-func compress(inputText string) []int {
+func compress(file *os.File){
 	dictSize := 128
 	dictionary:= getCompressDictionary()
-	var result []int
+	//var result []int
 	var bytesString []byte
-	for i := 0; i < len(inputText); i++ {
-		currentSymbol := inputText[i];
+	compressedFile, err := os.Create("compressedFile.txt")
+	if(err != nil){
+		fmt.Println("err")
+	}
+	writer:= bufio.NewWriter(compressedFile)
+	defer func() {
+		writer.Flush()
+		compressedFile.Close()
+	}()
+	reader := bufio.NewReader(file)
+	for{
+		inputChar, _, err := reader.ReadRune()
+		if(err != nil){
+			break
+		}
+		currentSymbol := byte(inputChar);
 		currentBytesString := append(bytesString, currentSymbol);
 		if _, ok := dictionary[string(currentBytesString)];
 		ok { bytesString = currentBytesString;
 		} else {
-			addToCompressDictionary(&result, dictionary, &bytesString, &dictSize, &currentBytesString, currentSymbol);
+			addToCompressDictionary(writer, dictionary, &bytesString, &dictSize, &currentBytesString, currentSymbol);
 		}
 	}
 	if len(bytesString) > 0 {
-		result = append(result, dictionary[string(bytesString)])
+		_, err := writer.WriteString(fmt.Sprintf("%d", dictionary[string(bytesString)]))
+		fmt.Println(fmt.Sprintf("%d", dictionary[string(bytesString)]))
+		if(err != nil){
+			fmt.Println("err")
+		}
 	}
-	return result
 }
 
-func addToCompressDictionary(result *[]int, dictionary map[string]int,
+func addToCompressDictionary(writer *bufio.Writer, dictionary map[string]int,
 	bytesString *[]byte, dictSize *int,
 	currentBytesString *[]byte,
 	currentSymbol byte){
-	*result = append(*result, dictionary[string(*bytesString)])
+	//*result = append(*result, dictionary[string(*bytesString)])
+	_, err := writer.WriteString(fmt.Sprintf("%d,", dictionary[string(*bytesString)]))
+	fmt.Println(fmt.Sprintf("%d", dictionary[string(*bytesString)]))
+	if(err != nil){
+		fmt.Println("err")
+	}
 	dictionary[string(*currentBytesString)] = *dictSize
 	*dictSize++
 	*currentBytesString = ([]byte{currentSymbol})
@@ -96,21 +119,15 @@ func decompress(compressed []int) (string, error) {
 }
 
 
-func readFile(fileName string) string{
-	file, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		fmt.Print(err)
-	}
-	return string(file)
-}
 
 func main() {
-	text := readFile("text.txt")
-	compressed := compress(text)
-	fmt.Println(compressed)
-	decompressed, err := decompress(compressed)
+	file, err := os.Open("text.txt")
+	 compress(file)
+	defer file.Close()
+//	fmt.Println(compressed)
+	//decompressed, err := decompress(compressed)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(decompressed)
+	//fmt.Println(decompressed)
 }
