@@ -135,16 +135,16 @@ func decompress(compressedFileName string) (string, error) {
 		//}
 		str = strings.Join(inputChar, "")
 		int64, err := strconv.ParseInt(str, 10, 32)
-		currentSymbol := int(int64)
-		if currentSymbolCode, ok := dictionary[currentSymbol];
-			ok { currentBytesString = currentSymbolCode[:len(currentSymbolCode):len(currentSymbolCode)]
-		} else if currentSymbol == dictSize && len(bytesString) > 0 {
+		currentSymbolCode := int(int64)
+		if currentSymbol, ok := dictionary[currentSymbolCode];
+			ok { currentBytesString = currentSymbol[:len(currentSymbol):len(currentSymbol)]
+		} else if currentSymbolCode == dictSize && len(bytesString) > 0 {
 			currentBytesString = append(bytesString, bytesString[0])
 		} else {
-			return result.String(), BadSymbolError(currentSymbol)
+			return result.String(), BadSymbolError(currentSymbolCode)
 		}
-		//result.Write(currentBytesString)
-		fmt.Println(currentBytesString)
+		writer.Write(currentBytesString)
+		fmt.Println(string(currentBytesString))
 		addToDecompressDictionary(&bytesString, &currentBytesString, dictionary, &dictSize)
 
 		str = ""
