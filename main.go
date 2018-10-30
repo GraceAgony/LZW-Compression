@@ -2,22 +2,26 @@ package main
 
 import (
 	"bufio"
+	"encoding/csv"
 	"fmt"
+	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 )
 
-func compress(file *os.File){
+func compress(file *os.File) string{
 	dictSize := 128
 	dictionary:= getCompressDictionary()
 	//var result []int
 	var bytesString []byte
-	compressedFile, err := os.Create("compressedFile.txt")
+	var fileName = "compressedFile.csv"
+	compressedFile, err := os.Create(fileName)
 	if(err != nil){
 		fmt.Println("err")
 	}
-	writer:= bufio.NewWriter(compressedFile)
+	writer:= csv.NewWriter(compressedFile)
 	defer func() {
 		writer.Flush()
 		compressedFile.Close()
@@ -37,20 +41,21 @@ func compress(file *os.File){
 		}
 	}
 	if len(bytesString) > 0 {
-		_, err := writer.WriteString(fmt.Sprintf("%d", dictionary[string(bytesString)]))
+		 err := writer.Write(strings.Split(fmt.Sprintf("%d", dictionary[string(bytesString)]),","))
 		fmt.Println(fmt.Sprintf("%d", dictionary[string(bytesString)]))
 		if(err != nil){
 			fmt.Println("err")
 		}
 	}
+	return fileName
 }
 
-func addToCompressDictionary(writer *bufio.Writer, dictionary map[string]int,
+func addToCompressDictionary(writer *csv.Writer, dictionary map[string]int,
 	bytesString *[]byte, dictSize *int,
 	currentBytesString *[]byte,
 	currentSymbol byte){
 	//*result = append(*result, dictionary[string(*bytesString)])
-	_, err := writer.WriteString(fmt.Sprintf("%d,", dictionary[string(*bytesString)]))
+	err := writer.Write(strings.Split(fmt.Sprintf("%d", dictionary[string(*bytesString)]), ","))
 	fmt.Println(fmt.Sprintf("%d", dictionary[string(*bytesString)]))
 	if(err != nil){
 		fmt.Println("err")
@@ -97,23 +102,52 @@ func (e BadSymbolError) Error() string {
 }
 
 
-func decompress(compressed []int) (string, error) {
+func decompress(compressedFileName string) (string, error) {
 	dictSize := 128
 	dictionary:=getDecompressDictionary()
 	var result strings.Builder
 	var bytesString []byte
 	var currentBytesString []byte
-	for _, currentSymbol := range compressed {
+
+	decompressedFile, err := os.Create("decompressedFile.txt")
+	if(err != nil){
+		fmt.Println("err")
+	}
+	writer:= bufio.NewWriter(decompressedFile)
+	defer func() {
+		writer.Flush()
+		decompressedFile.Close()
+	}()
+	compressedFile, err := os.Open(compressedFileName)
+	reader := csv.NewReader(compressedFile)
+	var str string
+	for {
+		inputChar,  err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+		//if(inputChar != ","){
+		//	str = str + fmt.Sprintf("%d", inputChar);
+		//	continue;
+		//}
+		str = strings.Join(inputChar, "")
+		int64, err := strconv.ParseInt(str, 10, 32)
+		currentSymbol := int(int64)
 		if currentSymbolCode, ok := dictionary[currentSymbol];
-		ok { currentBytesString = currentSymbolCode[:len(currentSymbolCode):len(currentSymbolCode)]
+			ok { currentBytesString = currentSymbolCode[:len(currentSymbolCode):len(currentSymbolCode)]
 		} else if currentSymbol == dictSize && len(bytesString) > 0 {
 			currentBytesString = append(bytesString, bytesString[0])
 		} else {
 			return result.String(), BadSymbolError(currentSymbol)
 		}
-		result.Write(currentBytesString)
-
+		//result.Write(currentBytesString)
+		fmt.Println(currentBytesString)
 		addToDecompressDictionary(&bytesString, &currentBytesString, dictionary, &dictSize)
+
+		str = ""
 	}
 	return result.String(), nil
 }
@@ -122,10 +156,9 @@ func decompress(compressed []int) (string, error) {
 
 func main() {
 	file, err := os.Open("text.txt")
-	 compress(file)
+	compressed := compress(file)
 	defer file.Close()
-//	fmt.Println(compressed)
-	//decompressed, err := decompress(compressed)
+	_, err = decompress(compressed)
 	if err != nil {
 		log.Fatal(err)
 	}
