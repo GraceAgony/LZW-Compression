@@ -42,7 +42,6 @@ func compress(file *os.File) string{
 	}
 	if len(bytesString) > 0 {
 		 err := writer.Write(strings.Split(fmt.Sprintf("%d", dictionary[string(bytesString)]),","))
-		fmt.Println(fmt.Sprintf("%d", dictionary[string(bytesString)]))
 		if(err != nil){
 			fmt.Println("err")
 		}
@@ -56,7 +55,6 @@ func addToCompressDictionary(writer *csv.Writer, dictionary map[string]int,
 	currentSymbol byte){
 	//*result = append(*result, dictionary[string(*bytesString)])
 	err := writer.Write(strings.Split(fmt.Sprintf("%d", dictionary[string(*bytesString)]), ","))
-	fmt.Println(fmt.Sprintf("%d", dictionary[string(*bytesString)]))
 	if(err != nil){
 		fmt.Println("err")
 	}
@@ -119,6 +117,9 @@ func decompress(compressedFileName string) (string, error) {
 		decompressedFile.Close()
 	}()
 	compressedFile, err := os.Open(compressedFileName)
+	if(err != nil){
+		log.Fatal(err)
+	}
 	reader := csv.NewReader(compressedFile)
 	var str string
 	for {
@@ -144,7 +145,6 @@ func decompress(compressedFileName string) (string, error) {
 			return result.String(), BadSymbolError(currentSymbolCode)
 		}
 		writer.Write(currentBytesString)
-		fmt.Println(string(currentBytesString))
 		addToDecompressDictionary(&bytesString, &currentBytesString, dictionary, &dictSize)
 
 		str = ""
@@ -162,5 +162,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//fmt.Println(decompressed)
 }
+
