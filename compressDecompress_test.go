@@ -11,7 +11,7 @@ import (
 )
 import "os"
 func TestCompressDecompress(t *testing.T) {
-	f := RandStringWrite(200)
+	f := RandStringWrite(150)//150000000)
 	file, err:= os.Open(f)
 	if err != nil {
 		log.Fatal(err)
