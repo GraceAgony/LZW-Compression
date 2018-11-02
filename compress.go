@@ -20,7 +20,6 @@ func getCompressDictionary() map[string]int{
 	return dictionary
 }
 
-
 func compress(file *os.File) string{
 	dictSize := 128
 	dictionary:= getCompressDictionary()
@@ -55,9 +54,6 @@ func compress(file *os.File) string{
 	return fileName
 }
 
-func getNextChar()  error{
-
-}
 
 func addToCompressDictionary(writer *csv.Writer, dictionary map[string]int,
 	bytesString *[]byte, dictSize *int,

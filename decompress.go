@@ -59,7 +59,6 @@ func decompress(compressedFileName string) (string, error) {
 		}
 		writer.Write(currentBytesString)
 		addToDecompressDictionary(&bytesString, &currentBytesString, dictionary, &dictSize)
-
 		str = ""
 	}
 	return result.String(), nil
